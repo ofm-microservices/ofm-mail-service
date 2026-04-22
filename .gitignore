@@ -1,0 +1,16 @@
+.env
+
+# Go build outputs
+bin/
+dist/
+coverage.out
+*.test
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
