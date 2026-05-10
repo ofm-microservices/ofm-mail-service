@@ -2,7 +2,7 @@ package smtp
 
 import (
 	"context"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	mail "mail-service/internal/domain"
 )

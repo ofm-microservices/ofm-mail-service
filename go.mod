@@ -6,7 +6,7 @@ require (
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats.go v1.47.0
-	github.com/ofm-microseervices/ofm-common v0.0.0
+	github.com/ofm-microservices/ofm-common v0.0.0
 	github.com/onsi/ginkgo/v2 v2.27.1
 	github.com/onsi/gomega v1.38.2
 	go.uber.org/fx v1.24.0
@@ -84,4 +84,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/ofm-microseervices/ofm-common => ../ofm-common
+replace github.com/ofm-microservices/ofm-common => ../ofm-common

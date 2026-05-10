@@ -3,7 +3,7 @@ package nats
 import (
 	"context"
 	"github.com/nats-io/nats.go"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	mail "mail-service/internal/domain"
 	eventbroker "mail-service/internal/presentation/event_broker"

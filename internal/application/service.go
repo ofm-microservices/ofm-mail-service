@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"errors"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	mail "mail-service/internal/domain"
 	netmail "net/mail"
 	"strings"
