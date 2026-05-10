@@ -8,6 +8,7 @@ import (
 // Config is the root runtime configuration for mail-service.
 type Config struct {
 	App       AppConfig
+	Metrics   MetricsConfig
 	SMTP      SMTPConfig
 	NATS      NATSConfig
 	Templates TemplatesConfig

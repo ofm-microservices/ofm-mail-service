@@ -8,6 +8,7 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/observability/metrics"
 	"mail-service/config"
 	eventbroker "mail-service/internal/presentation/event_broker"
 )
@@ -89,22 +90,30 @@ func (r *pullConsumerRuntime) runWorker(ctx context.Context, wg *sync.WaitGroup,
 				return
 			}
 
+			metrics.Global().IncNATSReceived(r.cfg.Stream, msg.Subject, r.cfg.Durable)
+			started := time.Now()
 			if err := r.handler(ctx, msg.Subject, msg.Data); err != nil {
+				metrics.Global().ObserveNATSProcessed(r.cfg.Stream, msg.Subject, r.cfg.Durable, "error", time.Since(started))
 				r.log.Error("message handler failed",
 					logging.String("subject", msg.Subject),
 					logging.Int("worker_id", workerID),
 					logging.Err(err),
 				)
 				_ = msg.Nak()
+				metrics.Global().IncNATSNak(r.cfg.Stream, msg.Subject, r.cfg.Durable)
 				continue
 			}
 
+			metrics.Global().ObserveNATSProcessed(r.cfg.Stream, msg.Subject, r.cfg.Durable, "success", time.Since(started))
 			if err := msg.Ack(); err != nil {
 				r.log.Error("message ack failed",
 					logging.String("subject", msg.Subject),
 					logging.Int("worker_id", workerID),
 					logging.Err(err),
 				)
+				metrics.Global().IncNATSNak(r.cfg.Stream, msg.Subject, r.cfg.Durable)
+			} else {
+				metrics.Global().IncNATSAck(r.cfg.Stream, msg.Subject, r.cfg.Durable)
 			}
 		}
 	}
@@ -170,6 +179,7 @@ func (r *pullConsumerRuntime) maybeUpdateAdaptivePlan(state *pullConsumerFetchSt
 	if err != nil {
 		return
 	}
+	metrics.Global().SetNATSPending(r.cfg.Stream, r.cfg.Subject, r.cfg.Durable, int(info.NumPending))
 
 	nextTier, nextBatch, nextWait := ResolvePullPlan(r.cfg, int(info.NumPending))
 	if nextTier == state.tier && nextBatch == state.batch && nextWait == state.wait {
@@ -179,6 +189,7 @@ func (r *pullConsumerRuntime) maybeUpdateAdaptivePlan(state *pullConsumerFetchSt
 	state.tier = nextTier
 	state.batch = nextBatch
 	state.wait = nextWait
+	metrics.Global().SetNATSBatchSize(r.cfg.Stream, r.cfg.Subject, r.cfg.Durable, state.batch)
 
 	r.log.Info("adaptive pull plan switched",
 		logging.String("subject", r.cfg.Subject),
@@ -203,6 +214,7 @@ func (r *pullConsumerRuntime) handleFetchError(err error) bool {
 		logging.String("durable", r.cfg.Durable),
 		logging.Err(err),
 	)
+	metrics.Global().IncNATSFetchError(r.cfg.Stream, r.cfg.Subject, r.cfg.Durable)
 	time.Sleep(250 * time.Millisecond)
 	return true
 }
