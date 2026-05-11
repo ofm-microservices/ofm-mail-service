@@ -9,6 +9,7 @@ import (
 type Config struct {
 	App       AppConfig
 	Metrics   MetricsConfig
+	Tracing   TracingConfig
 	SMTP      SMTPConfig
 	NATS      NATSConfig
 	Templates TemplatesConfig

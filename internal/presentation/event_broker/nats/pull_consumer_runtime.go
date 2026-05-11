@@ -9,6 +9,7 @@ import (
 	"github.com/nats-io/nats.go"
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"github.com/ofm-microservices/ofm-common/pkg/observability/metrics"
+	"github.com/ofm-microservices/ofm-common/pkg/observability/natstrace"
 	"mail-service/config"
 	eventbroker "mail-service/internal/presentation/event_broker"
 )
@@ -92,7 +93,8 @@ func (r *pullConsumerRuntime) runWorker(ctx context.Context, wg *sync.WaitGroup,
 
 			metrics.Global().IncNATSReceived(r.cfg.Stream, msg.Subject, r.cfg.Durable)
 			started := time.Now()
-			if err := r.handler(ctx, msg.Subject, msg.Data); err != nil {
+			msgCtx := natstrace.ContextFromMessage(ctx, msg)
+			if err := r.handler(msgCtx, msg.Subject, msg.Data); err != nil {
 				metrics.Global().ObserveNATSProcessed(r.cfg.Stream, msg.Subject, r.cfg.Durable, "error", time.Since(started))
 				r.log.Error("message handler failed",
 					logging.String("subject", msg.Subject),
