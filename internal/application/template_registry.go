@@ -61,24 +61,19 @@ func (r *templateRegistry) Register(def TemplateDefinition) error {
 	return nil
 }
 
-func (r *templateRegistry) Render(messageType string, data map[string]any) (*mail.Email, error) {
+func (r *templateRegistry) Render(messageType string, data any) (*mail.Email, error) {
 	tpl, ok := r.defs[messageType]
 	if !ok {
 		return nil, mail.ErrTemplateNotFound
 	}
 
-	payload := data
-	if payload == nil {
-		payload = map[string]any{}
-	}
-
 	var subject bytes.Buffer
-	if err := tpl.subject.Execute(&subject, payload); err != nil {
+	if err := tpl.subject.Execute(&subject, data); err != nil {
 		return nil, fmt.Errorf("%w: execute subject template: %v", mail.ErrFailedToRenderMail, err)
 	}
 
 	var body bytes.Buffer
-	if err := tpl.body.Execute(&body, payload); err != nil {
+	if err := tpl.body.Execute(&body, data); err != nil {
 		return nil, fmt.Errorf("%w: execute html template: %v", mail.ErrFailedToRenderMail, err)
 	}
 

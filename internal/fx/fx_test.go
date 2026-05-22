@@ -156,6 +156,10 @@ var _ = Describe("FX providers", func() {
 			Expect(os.Unsetenv("EMAIL_PASSWORD")).To(Succeed())
 		}()
 
+		Expect(os.Setenv("NATS_URL", "nats://localhost:4222")).To(Succeed())
+		Expect(os.Setenv("SENDER_EMAIL", "mailer@example.com")).To(Succeed())
+		Expect(os.Setenv("EMAIL_PASSWORD", "secret")).To(Succeed())
+
 		tmpDir := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(tmpDir, ".env"), []byte("NATS_URL=nats://localhost:4222\nSENDER_EMAIL=mailer@example.com\nEMAIL_PASSWORD=secret\n"), 0o600)).To(Succeed())
 		Expect(os.Chdir(tmpDir)).To(Succeed())

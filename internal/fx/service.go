@@ -20,6 +20,7 @@ var ServiceModule = fx.Options(
 		fx.Annotate(ProvideEmailCodeTemplateDefinition, fx.ResultTags(`group:"mail_templates"`)),
 		fx.Annotate(ProvideWelcomeTemplateDefinition, fx.ResultTags(`group:"mail_templates"`)),
 		fx.Annotate(ProvidePasswordResetTemplateDefinition, fx.ResultTags(`group:"mail_templates"`)),
+		fx.Annotate(ProvideOrderReceiptTemplateDefinition, fx.ResultTags(`group:"mail_templates"`)),
 	),
 )
 
@@ -87,5 +88,15 @@ func ProvidePasswordResetTemplateDefinition() app.TemplateDefinition {
 		MessageType:      "password_reset",
 		SubjectTemplate:  "Your OFM password reset code",
 		HTMLTemplatePath: "password_reset.html",
+	}
+}
+
+// ProvideOrderReceiptTemplateDefinition registers the order receipt template
+// definition.
+func ProvideOrderReceiptTemplateDefinition() app.TemplateDefinition {
+	return app.TemplateDefinition{
+		MessageType:      "order_receipt",
+		SubjectTemplate:  "Your OFM order receipt for {{.gig_title}}",
+		HTMLTemplatePath: "order_receipt.html",
 	}
 }
