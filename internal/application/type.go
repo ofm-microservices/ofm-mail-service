@@ -24,7 +24,7 @@ type TemplateRegistry interface {
 	// Register adds one message-type definition to the registry.
 	Register(def TemplateDefinition) error
 	// Render resolves a message type into a concrete email.
-	Render(messageType string, data map[string]any) (*mail.Email, error)
+	Render(messageType string, data any) (*mail.Email, error)
 }
 
 // TemplateDefinition binds one logical message type to its subject and HTML

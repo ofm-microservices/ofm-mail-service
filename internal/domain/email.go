@@ -16,7 +16,7 @@ type SendRequest struct {
 	CorrelationID string
 	MessageType   string
 	To            string
-	Data          map[string]any
+	Data          any
 }
 
 // SendResult is the outcome published after a mail send attempt completes.
