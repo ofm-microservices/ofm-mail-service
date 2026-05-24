@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Order update</title>
+</head>
+<body style="margin:0;background:#f6f7fb;font-family:Arial,Helvetica,sans-serif;color:#111827;">
+  <div style="max-width:640px;margin:0 auto;padding:24px;">
+    <div style="background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 8px 32px rgba(17,24,39,0.08);">
+      <div style="padding:24px 28px;background:linear-gradient(135deg,#111827 0%,#0f766e 100%);color:#fff;">
+        <div style="font-size:14px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;">OFM order update</div>
+        <h1 style="margin:8px 0 0;font-size:28px;line-height:1.2;">{{.message}}</h1>
+        <p style="margin:12px 0 0;font-size:15px;line-height:1.6;max-width:520px;">{{.event_kind}}</p>
+      </div>
+
+      <div style="padding:28px;">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;">
+          <div style="flex:1 1 220px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Order ID</div>
+            <div style="margin-top:6px;font-size:18px;font-weight:700;">{{.order_id}}</div>
+          </div>
+          <div style="flex:1 1 220px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:14px;padding:16px;">
+            <div style="font-size:12px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;">Status</div>
+            <div style="margin-top:6px;font-size:18px;font-weight:700;">{{.order_status}}</div>
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.6;">
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:12px 0;color:#6b7280;width:42%;">Gig</td>
+            <td style="padding:12px 0;font-weight:600;">{{.gig_title}}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:12px 0;color:#6b7280;">Package</td>
+            <td style="padding:12px 0;font-weight:600;">{{.package_tier}}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:12px 0;color:#6b7280;">Package details</td>
+            <td style="padding:12px 0;font-weight:600;">{{.package_description}}</td>
+          </tr>
+          <tr style="border-bottom:1px solid #e5e7eb;">
+            <td style="padding:12px 0;color:#6b7280;">Total</td>
+            <td style="padding:12px 0;font-weight:700;font-size:18px;">{{.price_display}}</td>
+          </tr>
+        </table>
+
+        <div style="margin-top:24px;padding:16px 18px;background:#ecfeff;border-radius:14px;border:1px solid #cffafe;">
+          <div style="font-size:13px;color:#155e75;text-transform:uppercase;letter-spacing:.06em;">Recipient</div>
+          <div style="margin-top:6px;font-size:16px;font-weight:700;color:#0f172a;">{{.recipient_email}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
