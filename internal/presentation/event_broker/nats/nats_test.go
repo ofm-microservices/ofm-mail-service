@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"go.uber.org/mock/gomock"
@@ -178,7 +178,9 @@ var _ = Describe("MailCommandSubscriber", func() {
 				RequestID:   "request-1",
 				MessageType: "email_code",
 				To:          "user@example.com",
-				Data:        json.RawMessage(`{"name":"Alex"}`),
+				Data: map[string]any{
+					"name": "Alex",
+				},
 			})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -230,7 +232,9 @@ var _ = Describe("MailCommandSubscriber", func() {
 				CorrelationID: "corr-1",
 				MessageType:   "email_code",
 				To:            "user@example.com",
-				Data:          json.RawMessage(`{"name":"Alex"}`),
+				Data: map[string]any{
+					"name": "Alex",
+				},
 			})
 			Expect(err).NotTo(HaveOccurred())
 
@@ -331,7 +335,9 @@ var _ = Describe("MailMessageMapper", func() {
 				CorrelationID: "corr-1",
 				MessageType:   "email_code",
 				To:            "user@example.com",
-				Data:          json.RawMessage(`{"name":"Alex"}`),
+				Data: map[string]any{
+					"name": "Alex",
+				},
 			})
 
 			Expect(err).NotTo(HaveOccurred())
@@ -347,17 +353,25 @@ var _ = Describe("MailMessageMapper", func() {
 			}))
 		})
 
-		It("returns an error for invalid embedded data", func() {
+		It("passes through command data without re-parsing", func() {
 			mapr := newMailMessageMapper()
 
 			req, err := mapr.ToSendRequest(sendMailCommand{
 				MessageType: "email_code",
 				To:          "user@example.com",
-				Data:        json.RawMessage(`{`),
+				Data: map[string]any{
+					"name": "Alex",
+				},
 			})
 
-			Expect(req).To(Equal(mail.SendRequest{}))
-			Expect(err).To(MatchError(ContainSubstring("unmarshal send mail command")))
+			Expect(err).NotTo(HaveOccurred())
+			Expect(req).To(Equal(mail.SendRequest{
+				MessageType: "email_code",
+				To:          "user@example.com",
+				Data: map[string]any{
+					"name": "Alex",
+				},
+			}))
 		})
 	})
 

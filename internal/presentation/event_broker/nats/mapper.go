@@ -13,13 +13,6 @@ func newMailMessageMapper() MailMessageMapper {
 }
 
 func (m *mailMessageMapper) ToSendRequest(cmd sendMailCommand) (mail.SendRequest, error) {
-	data := make(map[string]any)
-	if len(cmd.Data) > 0 {
-		if err := json.Unmarshal(cmd.Data, &data); err != nil {
-			return mail.SendRequest{}, WrapUnmarshalSendMailCommandError(err)
-		}
-	}
-
 	return mail.SendRequest{
 		SessionID:     cmd.SessionID,
 		ClientID:      cmd.ClientID,
@@ -28,7 +21,7 @@ func (m *mailMessageMapper) ToSendRequest(cmd sendMailCommand) (mail.SendRequest
 		CorrelationID: cmd.CorrelationID,
 		MessageType:   cmd.MessageType,
 		To:            cmd.To,
-		Data:          data,
+		Data:          cmd.Data,
 	}, nil
 }
 

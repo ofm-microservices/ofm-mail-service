@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/nats-io/nats.go"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	app "mail-service/internal/application"
 	mail "mail-service/internal/domain"
@@ -155,6 +155,10 @@ var _ = Describe("FX providers", func() {
 			Expect(os.Unsetenv("SENDER_EMAIL")).To(Succeed())
 			Expect(os.Unsetenv("EMAIL_PASSWORD")).To(Succeed())
 		}()
+
+		Expect(os.Setenv("NATS_URL", "nats://localhost:4222")).To(Succeed())
+		Expect(os.Setenv("SENDER_EMAIL", "mailer@example.com")).To(Succeed())
+		Expect(os.Setenv("EMAIL_PASSWORD", "secret")).To(Succeed())
 
 		tmpDir := GinkgoT().TempDir()
 		Expect(os.WriteFile(filepath.Join(tmpDir, ".env"), []byte("NATS_URL=nats://localhost:4222\nSENDER_EMAIL=mailer@example.com\nEMAIL_PASSWORD=secret\n"), 0o600)).To(Succeed())

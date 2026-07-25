@@ -10,6 +10,8 @@ func main() {
 	app := fx.New(
 		appfx.ConfigModule,
 		appfx.LoggerModule,
+		appfx.TracingModule,
+		appfx.MetricsModule,
 		appfx.AppModule,
 		appfx.MessagingModule,
 		appfx.ServiceModule,

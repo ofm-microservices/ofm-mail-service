@@ -2,7 +2,8 @@ package nats
 
 import (
 	"context"
-	"github.com/ofm-microseervices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/observability/natstrace"
 	"mail-service/config"
 	eventbroker "mail-service/internal/presentation/event_broker"
 	"time"
@@ -57,7 +58,7 @@ func NewBroker(cfg config.NATSConfig, log logging.Logger) (eventbroker.EventBrok
 func (b *natsBroker) Publish(ctx context.Context, subject string, payload []byte) error {
 	b.log.Debug("publishing message", logging.String("subject", subject), logging.Int("bytes", len(payload)))
 
-	if err := b.nc.Publish(subject, payload); err != nil {
+	if err := b.nc.PublishMsg(natstrace.NewMessage(ctx, subject, payload)); err != nil {
 		return WrapPublishToNATSError(subject, err)
 	}
 	if err := Flush(ctx, b.nc); err != nil {
@@ -71,7 +72,8 @@ func (b *natsBroker) Subscribe(ctx context.Context, subject string, handler even
 	b.log.Info("subscribing to subject", logging.String("subject", subject))
 
 	_, err := b.nc.Subscribe(subject, func(msg *nats.Msg) {
-		if err := handler(ctx, msg.Subject, msg.Data); err != nil {
+		msgCtx := natstrace.ContextFromMessage(ctx, msg)
+		if err := handler(msgCtx, msg.Subject, msg.Data); err != nil {
 			b.log.Error("message handler failed", logging.String("subject", msg.Subject), logging.Err(err))
 			return
 		}

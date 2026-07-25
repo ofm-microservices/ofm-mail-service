@@ -8,6 +8,8 @@ import (
 // Config is the root runtime configuration for mail-service.
 type Config struct {
 	App       AppConfig
+	Metrics   MetricsConfig
+	Tracing   TracingConfig
 	SMTP      SMTPConfig
 	NATS      NATSConfig
 	Templates TemplatesConfig
@@ -16,7 +18,8 @@ type Config struct {
 // Load reads environment variables into Config and applies the declared
 // defaults for mail-service.
 func Load() (*Config, error) {
-	_ = godotenv.Load()
+	_ = godotenv.Load(".env.local")
+	_ = godotenv.Load(".env")
 
 	cfg := &Config{}
 	if err := env.Parse(cfg); err != nil {

@@ -70,7 +70,7 @@ func (mr *MockTemplateRegistryMockRecorder) Register(def any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockTemplateRegistry)(nil).Register), def)
 }
 
-func (m *MockTemplateRegistry) Render(messageType string, data map[string]any) (*mail.Email, error) {
+func (m *MockTemplateRegistry) Render(messageType string, data any) (*mail.Email, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Render", messageType, data)
 	ret0, _ := ret[0].(*mail.Email)
