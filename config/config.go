@@ -12,6 +12,8 @@ type Config struct {
 	Tracing   TracingConfig
 	SMTP      SMTPConfig
 	NATS      NATSConfig
+	Kafka     KafkaConfig
+	Redis     RedisConfig
 	Templates TemplatesConfig
 }
 

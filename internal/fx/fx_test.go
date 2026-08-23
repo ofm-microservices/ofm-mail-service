@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nats-io/nats.go"
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	app "mail-service/internal/application"
@@ -18,8 +17,6 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"go.uber.org/fx"
 )
 
@@ -28,26 +25,6 @@ func TestFX(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "FX Suite")
 }
-
-var (
-	fxNATSContainer testcontainers.Container
-	fxNATSURL       string
-)
-
-var _ = BeforeSuite(func() {
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
-	defer cancel()
-
-	container, url := startFXNATSContainer(ctx)
-	fxNATSContainer = container
-	fxNATSURL = url
-})
-
-var _ = AfterSuite(func() {
-	if fxNATSContainer != nil {
-		Expect(fxNATSContainer.Terminate(context.Background())).To(Succeed())
-	}
-})
 
 type lifecycleStub struct {
 	hooks []fx.Hook
@@ -281,42 +258,8 @@ var _ = Describe("FX providers", func() {
 		Expect(func() { InvokeStartLog(lg) }).NotTo(Panic())
 	})
 
-	It("returns bootstrap errors from InvokeEnsureStream", func() {
-		err := InvokeEnsureStream(cfg, lg)
-
-		Expect(err).To(HaveOccurred())
-		Expect(err.Error()).To(ContainSubstring("connect to nats"))
-	})
-
-	It("ensures streams successfully against a real nats server", func() {
-		cfg.NATS.URL = fxNATSURL
-		cfg.NATS.MailCommandsStream = "MAIL_COMMANDS_FX"
-		cfg.NATS.MailEventsStream = "MAIL_EVENTS_FX"
-		cfg.NATS.MailSendSubject = "mail.send.fx"
-		cfg.NATS.MailSendResultSubject = "mail.send.result.fx"
-
-		err := InvokeEnsureStream(cfg, lg)
-
-		Expect(err).NotTo(HaveOccurred())
-
-		nc, err := nats.Connect(fxNATSURL)
-		Expect(err).NotTo(HaveOccurred())
-		defer nc.Close()
-
-		js, err := nc.JetStream()
-		Expect(err).NotTo(HaveOccurred())
-
-		commandsInfo, err := js.StreamInfo(cfg.NATS.MailCommandsStream)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(commandsInfo.Config.Subjects).To(ContainElement(cfg.NATS.MailSendSubject))
-
-		eventsInfo, err := js.StreamInfo(cfg.NATS.MailEventsStream)
-		Expect(err).NotTo(HaveOccurred())
-		Expect(eventsInfo.Config.Subjects).To(ContainElement(cfg.NATS.MailSendResultSubject))
-	})
-
-	It("constructs an event broker and registers an on-stop hook against a real nats server", func() {
-		cfg.NATS.URL = fxNATSURL
+	It("constructs a Kafka event broker and registers an on-stop hook", func() {
+		cfg.Kafka.Brokers = []string{"127.0.0.1:9092"}
 		lc := &lifecycleStub{}
 
 		broker, err := ProvideEventBroker(lc, cfg, lg)
@@ -338,7 +281,7 @@ var _ = Describe("FX providers", func() {
 		Expect(lc.hooks[0].OnStart).NotTo(BeNil())
 		Expect(lc.hooks[0].OnStop).NotTo(BeNil())
 		Expect(lc.hooks[0].OnStart(context.Background())).To(Succeed())
-		Expect(sub.calls).To(Equal(1))
+		Eventually(func() int { return sub.calls }).Should(Equal(1))
 		Expect(sub.lastCtx).NotTo(BeNil())
 		Expect(sub.lastCtx.Err()).NotTo(HaveOccurred())
 		Expect(lc.hooks[0].OnStop(context.Background())).To(Succeed())
@@ -351,7 +294,8 @@ var _ = Describe("FX providers", func() {
 
 		InvokeSubscribeMailCommands(lc, sub, cfg, lg)
 
-		Expect(lc.hooks[0].OnStart(context.Background())).To(MatchError("subscribe failed"))
+		Expect(lc.hooks[0].OnStart(context.Background())).To(Succeed())
+		Eventually(func() error { return sub.err }).Should(MatchError("subscribe failed"))
 	})
 })
 
@@ -359,24 +303,4 @@ func mustProvideSender(cfg *config.Config, lg logging.Logger) app.MailSender {
 	sender, err := ProvideMailSender(cfg, lg)
 	Expect(err).NotTo(HaveOccurred())
 	return sender
-}
-
-func startFXNATSContainer(ctx context.Context) (testcontainers.Container, string) {
-	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{
-		ContainerRequest: testcontainers.ContainerRequest{
-			Image:        "nats:2.11-alpine",
-			ExposedPorts: []string{"4222/tcp"},
-			Cmd:          []string{"-js"},
-			WaitingFor:   wait.ForListeningPort("4222/tcp"),
-		},
-		Started: true,
-	})
-	Expect(err).NotTo(HaveOccurred())
-
-	host, err := container.Host(ctx)
-	Expect(err).NotTo(HaveOccurred())
-	port, err := container.MappedPort(ctx, "4222/tcp")
-	Expect(err).NotTo(HaveOccurred())
-
-	return container, "nats://" + host + ":" + port.Port()
 }

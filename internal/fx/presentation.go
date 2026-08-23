@@ -2,11 +2,13 @@ package appfx
 
 import (
 	"context"
+	"time"
+
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	app "mail-service/internal/application"
 	eventbroker "mail-service/internal/presentation/event_broker"
-	events "mail-service/internal/presentation/event_broker/nats"
+	events "mail-service/internal/presentation/event_broker/kafka"
 
 	"go.uber.org/fx"
 )
@@ -21,7 +23,7 @@ var PresentationModule = fx.Options(
 	fx.Invoke(InvokeSubscribeMailCommands),
 )
 
-// ProvideMailCommandSubscriber constructs the NATS subscriber that consumes
+// ProvideMailCommandSubscriber constructs the Kafka subscriber that consumes
 // mail send commands.
 func ProvideMailCommandSubscriber(
 	broker eventbroker.EventBroker,
@@ -30,7 +32,7 @@ func ProvideMailCommandSubscriber(
 	resolver events.FailureReasonResolver,
 	lg logging.Logger,
 ) (events.MailCommandSubscriber, error) {
-	return events.NewMailCommandSubscriber(broker, service, cfg.NATS, resolver, lg)
+	return events.NewMailCommandSubscriber(broker, service, cfg.Kafka, resolver, lg)
 }
 
 // InvokeSubscribeMailCommands starts background consumers for mail commands.
@@ -47,13 +49,34 @@ func InvokeSubscribeMailCommands(
 			runCtx, runCancel := context.WithCancel(context.Background())
 			cancel = runCancel
 
-			if err := subscriber.Subscribe(runCtx); err != nil {
-				lg.Error("subscribe to mail commands failed", logging.Err(err))
-				cancel()
-				return err
-			}
-
 			lg.Info("mail-service initialized", logging.String("env", cfg.App.Env))
+			go func() {
+				backoff := 100 * time.Millisecond
+				for runCtx.Err() == nil {
+					err := subscriber.Subscribe(runCtx)
+					if runCtx.Err() != nil {
+						return
+					}
+					if err != nil {
+						lg.Error("subscribe to mail commands failed; reconnecting", logging.Err(err), logging.String("backoff", backoff.String()))
+					} else {
+						lg.Warn("mail command consumer stopped; reconnecting", logging.String("backoff", backoff.String()))
+					}
+					timer := time.NewTimer(backoff)
+					select {
+					case <-runCtx.Done():
+						timer.Stop()
+						return
+					case <-timer.C:
+					}
+					if backoff < 30*time.Second {
+						backoff *= 2
+						if backoff > 30*time.Second {
+							backoff = 30 * time.Second
+						}
+					}
+				}
+			}()
 			return nil
 		},
 		OnStop: func(context.Context) error {
