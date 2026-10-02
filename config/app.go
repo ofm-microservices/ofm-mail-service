@@ -4,4 +4,5 @@ package config
 type AppConfig struct {
 	Env      string `env:"APP_ENV" envDefault:"local"`
 	LogLevel string `env:"LOG_LEVEL" envDefault:"info"`
+	ObservabilityMode string `env:"APP_OBSERVABILITY_MODE" envDefault:"production"`
 }
