@@ -15,7 +15,7 @@ var LoggerModule = fx.Options(
 
 // ProvideLogger constructs the shared zap-based logger and syncs it on stop.
 func ProvideLogger(lc fx.Lifecycle, cfg *config.Config) (logging.Logger, error) {
-	lg, err := logging.New("mail-service", cfg.App.Env, cfg.App.LogLevel)
+	lg, err := logging.NewWithMode("mail-service", cfg.App.Env, cfg.App.ObservabilityMode, cfg.App.LogLevel)
 	if err != nil {
 		return nil, err
 	}
