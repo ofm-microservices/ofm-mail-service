@@ -6,6 +6,7 @@ import (
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
 	"mail-service/config"
 	app "mail-service/internal/application"
+	fakemailer "mail-service/pkg/mailer/fake"
 	smtpmailer "mail-service/pkg/mailer/smtp"
 
 	"go.uber.org/fx"
@@ -36,6 +37,10 @@ var ServiceModule = fx.Options(
 
 // ProvideMailSender constructs the SMTP-backed mail sender.
 func ProvideMailSender(cfg *config.Config, lg logging.Logger) (app.MailSender, error) {
+	if cfg.SMTP.Mode == "fake" || cfg.SMTP.Mode == "discard" {
+		lg.Info("using fake mail sender")
+		return fakemailer.Sender{}, nil
+	}
 	return smtpmailer.New(cfg.SMTP, lg)
 }
 

@@ -4,7 +4,8 @@ import "time"
 
 // NATSConfig defines the mail-service command, result, and consumer settings.
 type NATSConfig struct {
-	URL                         string        `env:"NATS_URL,required"`
+	// URL is retained only for compatibility adapters; production uses Kafka.
+	URL                         string        `env:"NATS_URL"`
 	User                        string        `env:"NATS_USER"`
 	Password                    string        `env:"NATS_PASSWORD"`
 	MailCommandsStream          string        `env:"NATS_STREAM_MAIL_COMMANDS" envDefault:"MAIL_COMMANDS"`

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/ofm-microservices/ofm-common/pkg/logging"
+	"github.com/ofm-microservices/ofm-common/pkg/resilience"
 	mail "mail-service/internal/domain"
 	"net"
 	netmail "net/mail"
@@ -25,6 +26,7 @@ type smtpSender struct {
 	from     string
 	fromAddr string
 	log      logging.Logger
+	breaker  *resilience.Breaker
 }
 
 // New constructs the SMTP sender used by mail-service.
@@ -58,11 +60,26 @@ func New(cfg SMTPConfig, log Logger) (Sender, error) {
 		from:     from,
 		fromAddr: cfg.SenderEmail,
 		log:      log.With(logging.String("module", "smtp-sender")),
+		breaker:  resilience.NewBreaker(resilience.BreakerConfigFromEnv()),
 	}, nil
 }
 
 // Send validates the outbound email and delivers it over SMTP.
 func (s *smtpSender) Send(ctx context.Context, msg mail.Email) error {
+	if s.breaker == nil {
+		s.breaker = resilience.NewBreaker(resilience.BreakerConfigFromEnv())
+	}
+	var sendErr error
+	if err := s.breaker.Do(ctx, func(callCtx context.Context) error {
+		sendErr = s.send(callCtx, msg)
+		return sendErr
+	}); err != nil {
+		return err
+	}
+	return sendErr
+}
+
+func (s *smtpSender) send(ctx context.Context, msg mail.Email) error {
 	if _, err := netmail.ParseAddress(msg.To); err != nil {
 		return mail.ErrInvalidRecipientEmail
 	}
